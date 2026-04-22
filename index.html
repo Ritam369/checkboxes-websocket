@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>10,000 Real-Time Checkboxes</title>
+      <style>
+        :root {
+          color-scheme: dark;
+          font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        }
+
+        body {
+          margin: 0;
+          padding: 20px;
+          background: #0d1117;
+          color: #e6edf3;
+        }
+
+        h1 {
+          margin-top: 0;
+          font-size: 1.25rem;
+        }
+
+        p {
+          margin: 0 0 16px;
+          color: #9da7b3;
+        }
+
+        #checkbox-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, 35px);
+          gap: 8px;
+          align-items: center;
+        }
+
+        .cell {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding: 6px 5px;
+          border: 1px solid #30363d;
+          border-radius: 8px;
+          background: #161b22;
+        }
+
+        /* label {
+          font-size: 0.72rem;
+          user-select: none;
+        } */
+      </style>
+  </head>
+  <body>
+      <h1>10,000 Real-Time Checkboxes</h1>
+      <p>All updates are synced and persisted through the server.</p>
+      <div id="checkbox-grid"></div>
+
+      <script src="/socket.io/socket.io.js"></script>
+      <script>
+        const CHECKBOX_COUNT = 10000
+        const socket = io()
+        const grid = document.getElementById("checkbox-grid")
+        const checkboxes = new Array(CHECKBOX_COUNT)
+
+        const createCheckboxes = () => {
+          const fragment = document.createDocumentFragment()
+
+          for (let i = 0; i < CHECKBOX_COUNT; i += 1) {
+            const checkboxId = `checkbox-${i}`
+
+            const wrapper = document.createElement("div")
+            wrapper.className = "cell"
+
+            const input = document.createElement("input")
+            input.type = "checkbox"
+            input.id = checkboxId
+            input.dataset.index = String(i)
+
+            input.addEventListener("change", () => {
+              socket.emit("Update", {
+                index: i,
+                checkedFlag: input.checked,
+              })
+            })
+
+            // const label = document.createElement("label")
+            // label.htmlFor = checkboxId
+            // label.textContent = checkboxId.split("-").pop()
+
+            wrapper.appendChild(input)
+            // wrapper.appendChild(label)
+            fragment.appendChild(wrapper)
+            checkboxes[i] = input
+          }
+
+          grid.appendChild(fragment)
+        }
+
+        socket.on("PersistedState", (state) => {
+          if (!Array.isArray(state)) {
+            return
+          }
+
+          const limit = Math.min(state.length, CHECKBOX_COUNT)
+          for (let i = 0; i < limit; i += 1) {
+            checkboxes[i].checked = Boolean(state[i])
+          }
+        })
+
+        socket.on("Update", ({index, checkedFlag}) => {
+          if (!Number.isInteger(index) || index < 0 || index >= CHECKBOX_COUNT) {
+            return
+          }
+
+          checkboxes[index].checked = Boolean(checkedFlag)
+        })
+
+        createCheckboxes()
+      </script>
+  </body>
+</html>

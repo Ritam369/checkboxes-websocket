@@ -1,0 +1,13 @@
+{
+  "name": "checkboxes-websocket",
+  "module": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "bun run index.js",
+    "dev": "bun --watch index.js"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "socket.io": "^4.8.3"
+  }
+}
