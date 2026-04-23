@@ -66,29 +66,15 @@
           const fragment = document.createDocumentFragment()
 
           for (let i = 0; i < CHECKBOX_COUNT; i += 1) {
-            const checkboxId = `checkbox-${i}`
-
             const wrapper = document.createElement("div")
             wrapper.className = "cell"
 
             const input = document.createElement("input")
             input.type = "checkbox"
-            input.id = checkboxId
+            input.id = `checkbox-${i}`
             input.dataset.index = String(i)
 
-            input.addEventListener("change", () => {
-              socket.emit("Update", {
-                index: i,
-                checkedFlag: input.checked,
-              })
-            })
-
-            // const label = document.createElement("label")
-            // label.htmlFor = checkboxId
-            // label.textContent = checkboxId.split("-").pop()
-
             wrapper.appendChild(input)
-            // wrapper.appendChild(label)
             fragment.appendChild(wrapper)
             checkboxes[i] = input
           }
@@ -96,15 +82,18 @@
           grid.appendChild(fragment)
         }
 
-        socket.on("PersistedState", (state) => {
-          if (!Array.isArray(state)) {
-            return
-          }
+        grid.addEventListener("change", (e) => {
+          if (e.target.type !== "checkbox") return
+          const index = Number(e.target.dataset.index)
+          socket.emit("Update", {index, checkedFlag: e.target.checked})
+        })
 
-          const limit = Math.min(state.length, CHECKBOX_COUNT)
-          for (let i = 0; i < limit; i += 1) {
-            checkboxes[i].checked = Boolean(state[i])
-          }
+        socket.on("PersistedState", (checkedIndices) => {
+          if (!Array.isArray(checkedIndices)) return
+          checkedIndices.forEach((i) => {
+            if (i >= 0 && i < CHECKBOX_COUNT) 
+              checkboxes[i].checked = true
+          })
         })
 
         socket.on("Update", ({index, checkedFlag}) => {
