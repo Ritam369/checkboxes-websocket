@@ -83,17 +83,22 @@
         }
 
         grid.addEventListener("change", (e) => {
-          //If an user updates the state of any checkbox,
-          //the client side socket will send an "Update" event to the server
-          //with the index and the checked state of the checkbox
+          // If a user updates the state of any checkbox, the browser updates the UI instantly.
+          // not blocking that native update. Instead, the client side socket will 
+          // optimistically send an "Update" event to the server in the background
+          // with the index and the checked state of the checkbox.
           if (e.target.type !== "checkbox") 
             return
+            
           const index = Number(e.target.dataset.index)
-          socket.emit("Update", {index, checkedFlag: e.target.checked}) //one particular socket is sending the "Update" event for a perticular checkbox
+          
+          // one particular socket is sending the "Update" event for a particular checkbox
+          socket.emit("Update", {index, checkedFlag: e.target.checked}) 
         })
 
         socket.on("PersistedState", (checkedIndices) => {
-          // Based on the "PersistedState" event and the array of checked indices, update the checkbox states to the specific indices
+          // Based on the initial "PersistedState" event and the array of checked indices, 
+          // update the checkbox states to sync with the Redis database on first load.
           if (!Array.isArray(checkedIndices)) return
           checkedIndices.forEach((i) => {
             if (i >= 0 && i < CHECKBOX_COUNT) 
@@ -102,12 +107,17 @@
         })
 
         socket.on("Update", ({index, checkedFlag}) => {
-          //Broadcasted "Update" event from the server side to all the other users, the particular checkbox's state 
+          // Broadcasted "Update" event from the server side to all the other users regarding a particular checkbox's state. 
           if (!Number.isInteger(index) || index < 0 || index >= CHECKBOX_COUNT) {
             return
           }
 
-          checkboxes[index].checked = Boolean(checkedFlag)
+          // OPTIMISTIC UI CHECK: Only update the DOM if the incoming server state is actually 
+          // different from what the user currently sees. This prevents the checkbox from 
+          // "flickering" or causing lag if the server echoes back the change this specific user just made.
+          if (checkboxes[index].checked !== Boolean(checkedFlag)) {
+            checkboxes[index].checked = Boolean(checkedFlag)
+          }
         })
 
         createCheckboxes()
