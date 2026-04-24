@@ -83,12 +83,17 @@
         }
 
         grid.addEventListener("change", (e) => {
-          if (e.target.type !== "checkbox") return
+          //If an user updates the state of any checkbox,
+          //the client side socket will send an "Update" event to the server
+          //with the index and the checked state of the checkbox
+          if (e.target.type !== "checkbox") 
+            return
           const index = Number(e.target.dataset.index)
-          socket.emit("Update", {index, checkedFlag: e.target.checked})
+          socket.emit("Update", {index, checkedFlag: e.target.checked}) //one particular socket is sending the "Update" event for a perticular checkbox
         })
 
         socket.on("PersistedState", (checkedIndices) => {
+          // Based on the "PersistedState" event and the array of checked indices, update the checkbox states to the specific indices
           if (!Array.isArray(checkedIndices)) return
           checkedIndices.forEach((i) => {
             if (i >= 0 && i < CHECKBOX_COUNT) 
@@ -97,6 +102,7 @@
         })
 
         socket.on("Update", ({index, checkedFlag}) => {
+          //Broadcasted "Update" event from the server side to all the other users, the particular checkbox's state 
           if (!Number.isInteger(index) || index < 0 || index >= CHECKBOX_COUNT) {
             return
           }
