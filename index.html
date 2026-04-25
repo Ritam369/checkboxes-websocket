@@ -108,16 +108,14 @@
 
         socket.on("Update", ({index, checkedFlag}) => {
           // Broadcasted "Update" event from the server side to all the other users regarding a particular checkbox's state. 
-          if (!Number.isInteger(index) || index < 0 || index >= CHECKBOX_COUNT) {
-            return
-          }
+          // if (!Number.isInteger(index) || index < 0 || index >= CHECKBOX_COUNT) {
+          //   return
+          // }
 
-          // OPTIMISTIC UI CHECK: Only update the DOM if the incoming server state is actually 
-          // different from what the user currently sees. This prevents the checkbox from 
-          // "flickering" or causing lag if the server echoes back the change this specific user just made.
-          if (checkboxes[index].checked !== Boolean(checkedFlag)) {
+          // OPTIMISTIC UI CHECK: Only update the DOM if the incoming server state is actually different from what the user currently sees. This prevents the checkbox from "flickering" or causing lag if the server echoes back the change this specific user just made.
+          // if (checkboxes[index].checked !== Boolean(checkedFlag)) {
             checkboxes[index].checked = Boolean(checkedFlag)
-          }
+          // }
         })
 
         createCheckboxes()
